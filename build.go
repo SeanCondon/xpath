@@ -436,6 +436,21 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 			return nil, err
 		}
 		qyOutput = &transformFunctionQuery{Input: argQuery, Func: reverseFunc}
+	case "set-contains":
+		if len(root.Args) != 2 {
+			return nil, fmt.Errorf("xpath: set-contains(node-set, string) function must have 2 parameters")
+		}
+		var (
+			argQuery, containsQuery query
+			err                     error
+		)
+		if argQuery, err = b.processNode(root.Args[0]); err != nil {
+			return nil, err
+		}
+		if containsQuery, err = b.processNode(root.Args[1]); err != nil {
+			return nil, err
+		}
+		qyOutput = &functionQuery{Input: argQuery, Func: setContainsFunc(containsQuery)}
 	default:
 		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
 	}
