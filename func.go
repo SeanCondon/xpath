@@ -614,3 +614,36 @@ func reverseFunc(q query, t iterator) func() NodeNavigator {
 		return node
 	}
 }
+
+// setContainsFunc is like XPath function "contains" but will compare to all elements in a set, not just first one.
+// This function is not part of the XPath 1.0 standard
+// Returns boolean
+func setContainsFunc(arg1 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		var str string
+		switch v := functionArgs(arg1).Evaluate(t).(type) {
+		case string:
+			str = v
+		case query:
+			node := v.Select(t)
+			if node == nil {
+				return ""
+			}
+			str = node.Value()
+		default:
+			panic(fmt.Errorf("unexpected arg1 type: %T", v))
+		}
+		switch typ := functionArgs(q).Evaluate(t).(type) {
+		case query:
+			for node := typ.Select(t); node != nil; node = typ.Select(t) {
+				cmp := node.Value()
+				if cmp == str {
+					return true
+				}
+			}
+		default:
+			panic(fmt.Errorf("unexpected q type: %T", typ))
+		}
+		return false
+	}
+}
