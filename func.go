@@ -627,35 +627,75 @@ func reverseFunc(q query, t iterator) func() NodeNavigator {
 	}
 }
 
-// setContainsFunc is like XPath function "contains" but will compare to all elements in a set, not just first one.
+// setContainsFunc is like XPath function "contains" but will compare any item from arg1 set to ANY elements in the
+// query set - not just first one.
 // This function is not part of the XPath 1.0 standard
 // Returns boolean
 func setContainsFunc(arg1 query) func(query, iterator) interface{} {
 	return func(q query, t iterator) interface{} {
-		var str string
-		switch v := functionArgs(arg1).Evaluate(t).(type) {
+		strArray := make([]string, 0)
+		switch typ1 := functionArgs(arg1).Evaluate(t).(type) {
 		case string:
-			str = v
+			strArray = append(strArray, typ1)
 		case query:
-			node := v.Select(t)
-			if node == nil {
-				return ""
+			for node := typ1.Select(t); node != nil; node = typ1.Select(t) {
+				strArray = append(strArray, node.Value())
 			}
-			str = node.Value()
 		default:
-			panic(fmt.Errorf("unexpected arg1 type: %T", v))
+			panic(fmt.Errorf("unexpected arg1 type: %T", typ1))
 		}
 		switch typ := functionArgs(q).Evaluate(t).(type) {
 		case query:
 			for node := typ.Select(t); node != nil; node = typ.Select(t) {
 				cmp := node.Value()
-				if cmp == str {
-					return true
+				for _, v1 := range strArray {
+					if v1 == cmp {
+						return true
+					}
 				}
 			}
 		default:
 			panic(fmt.Errorf("unexpected q type: %T", typ))
 		}
 		return false
+	}
+}
+
+// setEqualsFunc is like XPath function "contains" but will compare any item from arg1 set to ALL elements in the
+// query set - not just first one.
+// This function is not part of the XPath 1.0 standard
+// Returns boolean
+func setEqualsFunc(arg1 query) func(query, iterator) interface{} {
+	return func(q query, t iterator) interface{} {
+		strArray1 := make([]string, 0)
+		switch typ1 := functionArgs(arg1).Evaluate(t).(type) {
+		case string:
+			strArray1 = append(strArray1, typ1)
+		case query:
+			for node := typ1.Select(t); node != nil; node = typ1.Select(t) {
+				strArray1 = append(strArray1, node.Value())
+			}
+		default:
+			panic(fmt.Errorf("unexpected arg1 type: %T", typ1))
+		}
+
+		strArray2 := make([]string, 0)
+		switch typ := functionArgs(q).Evaluate(t).(type) {
+		case query:
+			for node := typ.Select(t); node != nil; node = typ.Select(t) {
+				strArray2 = append(strArray2, node.Value())
+			}
+		default:
+			panic(fmt.Errorf("unexpected q type: %T", typ))
+		}
+		if len(strArray1) != len(strArray2) {
+			return false
+		}
+		for i, v := range strArray1 {
+			if v != strArray2[i] {
+				return false
+			}
+		}
+		return true
 	}
 }
