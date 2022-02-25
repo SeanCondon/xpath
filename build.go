@@ -462,7 +462,7 @@ func (b *builder) processFunctionNode(root *functionNode) (query, error) {
 		if containsQuery, err = b.processNode(root.Args[1]); err != nil {
 			return nil, err
 		}
-		qyOutput = &functionQuery{Input: argQuery, Func: setContainsFunc(containsQuery)}
+		qyOutput = &functionQuery{Input: argQuery, Func: setEqualsFunc(containsQuery)}
 	default:
 		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
 	}
