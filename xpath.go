@@ -68,6 +68,12 @@ type NodeNavigator interface {
 
 	// MoveTo moves the NodeNavigator to the same position as the specified NodeNavigator.
 	MoveTo(NodeNavigator) bool
+
+	// MarkThis marks the origin of the Select query, so it can be accessed later with $this
+	MarkThis()
+
+	// MoveToThis sets the curr node to what was stored in this
+	MoveToThis()
 }
 
 // NodeIterator holds all matched Node object.
@@ -118,6 +124,7 @@ func (f iteratorFunc) Current() NodeNavigator {
 // Evaluate returns the result of the expression.
 // The result type of the expression is one of the follow: bool,float64,string,NodeIterator).
 func (expr *Expr) Evaluate(root NodeNavigator) interface{} {
+	root.MarkThis()
 	val := expr.q.Evaluate(iteratorFunc(func() NodeNavigator { return root }))
 	switch val.(type) {
 	case query:
@@ -130,6 +137,7 @@ func (expr *Expr) Evaluate(root NodeNavigator) interface{} {
 // Select selects a node set using the specified XPath expression.
 func (expr *Expr) Select(root NodeNavigator) *NodeIterator {
 	expr.q.Reset()
+	root.MarkThis()
 	return &NodeIterator{query: expr.q, node: root}
 }
 

@@ -26,7 +26,7 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
 	switch root.AxeType {
 	case "attribute":
 		typ = AttributeNode
-	case "self", "parent":
+	case "self", "parent", "this":
 		typ = allNode
 	default:
 		switch root.Prop {
@@ -138,6 +138,8 @@ func (b *builder) processAxisNode(root *axisNode) (query, error) {
 		qyOutput = &precedingQuery{Input: qyInput, Predicate: predicate, Sibling: true}
 	case "self":
 		qyOutput = &selfQuery{Input: qyInput, Predicate: predicate}
+	case "this":
+		qyOutput = &thisQuery{Input: qyInput, Predicate: predicate}
 	case "namespace":
 		// haha,what will you do someting??
 	default:
@@ -527,6 +529,20 @@ func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
 	return qyOutput, nil
 }
 
+func (b *builder) processVariableNode(root *variableNode) (q query, err error) {
+	if root.String() != "this" {
+		return nil, fmt.Errorf("undeclared variable in XPath expression %s", root.String())
+	}
+	thisNode := &axisNode{
+		nodeType: nodeAxis,
+		AxeType:  "this",
+	}
+	q, err = b.processAxisNode(thisNode)
+	b.firstInput = q
+
+	return
+}
+
 func (b *builder) processNode(root node) (q query, err error) {
 	if b.depth = b.depth + 1; b.depth > 1024 {
 		err = errors.New("the xpath expressions is too complex")
@@ -557,6 +573,8 @@ func (b *builder) processNode(root node) (q query, err error) {
 		// fix https://github.com/antchfx/xpath/issues/76
 		q = &cacheQuery{Input: q}
 		b.firstInput = q
+	case nodeVariable:
+		q, err = b.processVariableNode(root.(*variableNode))
 	}
 	return
 }

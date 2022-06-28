@@ -29,6 +29,10 @@ func TestCompile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("/a/b/(c, .[not(c)]) should be correct but got error %s", err)
 	}
+	_, err = Compile("$this/a")
+	if err != nil {
+		t.Fatalf("$this/a should be correct but got error %s", err)
+	}
 }
 
 func TestMustCompile(t *testing.T) {
@@ -73,6 +77,20 @@ func TestSelf(t *testing.T) {
 	testXPath(t, html, "self::*", "html")
 	testXPath(t, html.LastChild, "self::body", "body")
 	testXPath2(t, html, "//body/./ul/li/a", 3)
+}
+
+func TestThis(t *testing.T) {
+	testXPath(t, html, "$this", "html")
+	testXPath(t, html.FirstChild, "$this", "head")
+	tnav := createNavigator(html)
+	tnav.MoveToChild() // head
+	tnav.MoveToNext()  // body
+	tnav.MoveToChild() // h1
+	tnav.MoveToNext()  // ul
+	texpr, err := Compile("substring(//title, 1,count($this/li))")
+	assertNil(t, err)
+	res := texpr.Evaluate(tnav)
+	assertTrue(t, "Hell" == res)
 }
 
 func TestParent(t *testing.T) {
@@ -502,8 +520,8 @@ func (n *TNode) Value() string {
 
 // TNodeNavigator is for navigating TNode.
 type TNodeNavigator struct {
-	curr, root *TNode
-	attr       int
+	curr, root, this *TNode
+	attr             int
 }
 
 func (n *TNodeNavigator) NodeType() NodeType {
@@ -623,6 +641,14 @@ func (n *TNodeNavigator) MoveTo(other NodeNavigator) bool {
 	n.curr = node.curr
 	n.attr = node.attr
 	return true
+}
+
+func (n *TNodeNavigator) MarkThis() {
+	n.this = n.curr
+}
+
+func (n *TNodeNavigator) MoveToThis() {
+	n.curr = n.this
 }
 
 func createNode(data string, typ NodeType) *TNode {
