@@ -74,6 +74,9 @@ type NodeNavigator interface {
 
 	// MoveToThis sets the curr node to what was stored in this
 	MoveToThis()
+
+	// IgnoringPrefix - is a flag set in the Navigator at creation time
+	IgnoringPrefix() bool
 }
 
 // NodeIterator holds all matched Node object.
