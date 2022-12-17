@@ -1,3 +1,3 @@
-module github.com/antchfx/xpath
+module github.com/SeanCondon/xpath
 
-go 1.14
+go 1.16

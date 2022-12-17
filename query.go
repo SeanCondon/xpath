@@ -550,6 +550,40 @@ func (s *selfQuery) Reset() {
 	s.Input.Reset()
 }
 
+// This query is a non-standard extension that allows the origin of a query to be used in a predictate
+// thisQuery is an this node query.(this::*)
+type thisQuery struct {
+	Input     query
+	Predicate func(NodeNavigator) bool
+}
+
+func (tq *thisQuery) Select(t iterator) NodeNavigator {
+	for {
+		node := tq.Input.Select(t)
+		if node == nil {
+			return nil
+		}
+		node = node.Copy()
+		node.MoveToThis()
+		if tq.Predicate(node) {
+			return node
+		}
+	}
+}
+
+func (tq *thisQuery) Evaluate(t iterator) interface{} {
+	tq.Input.Evaluate(t)
+	return tq
+}
+
+func (tq *thisQuery) Test(n NodeNavigator) bool {
+	return tq.Predicate(n)
+}
+
+func (tq *thisQuery) Reset() {
+	tq.Input.Reset()
+}
+
 // filterQuery is an XPath query for predicate filter.
 type filterQuery struct {
 	Input     query
