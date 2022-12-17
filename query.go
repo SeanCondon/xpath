@@ -580,8 +580,8 @@ func (tq *thisQuery) Test(n NodeNavigator) bool {
 	return tq.Predicate(n)
 }
 
-func (tq *thisQuery) Clone() query {
-	return &thisQuery{Input: tq.Input.Clone(), Predicate: tq.Predicate}
+func (tq *thisQuery) Reset() {
+	tq.Input.Reset()
 }
 
 // filterQuery is an XPath query for predicate filter.

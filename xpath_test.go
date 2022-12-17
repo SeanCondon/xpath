@@ -522,6 +522,7 @@ func (n *TNode) Value() string {
 type TNodeNavigator struct {
 	curr, root, this *TNode
 	attr             int
+	ignoreNamespace  bool
 }
 
 func (n *TNodeNavigator) NodeType() NodeType {
@@ -649,6 +650,10 @@ func (n *TNodeNavigator) MarkThis() {
 
 func (n *TNodeNavigator) MoveToThis() {
 	n.curr = n.this
+}
+
+func (n *TNodeNavigator) IgnoringPrefix() bool {
+	return n.ignoreNamespace
 }
 
 func createNode(data string, typ NodeType) *TNode {
